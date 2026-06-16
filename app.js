@@ -1,4 +1,4 @@
-const socket = io("YOUR_RENDER_URL_HERE");
+const socket = io("https://miniwolves-server.onrender.com");
 
 let roomCode = "";
 
