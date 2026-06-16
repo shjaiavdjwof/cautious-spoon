@@ -28,7 +28,11 @@ socket.on("room-update", room => {
     const voteSelect =
         document.getElementById("voteTarget");
 
+    const actionSelect =
+        document.getElementById("actionTarget");
+
     voteSelect.innerHTML = "";
+    actionSelect.innerHTML = "";
 
     room.players.forEach(player => {
 
@@ -43,16 +47,31 @@ socket.on("room-update", room => {
 
         if (!player.dead) {
 
-            const option =
+            const voteOption =
                 document.createElement("option");
 
-            option.value =
+            voteOption.value =
                 player.id;
 
-            option.textContent =
+            voteOption.textContent =
                 player.name;
 
-            voteSelect.appendChild(option);
+            voteSelect.appendChild(
+                voteOption
+            );
+
+            const actionOption =
+                document.createElement("option");
+
+            actionOption.value =
+                player.id;
+
+            actionOption.textContent =
+                player.name;
+
+            actionSelect.appendChild(
+                actionOption
+            );
         }
     });
 
@@ -139,6 +158,33 @@ function votePlayer() {
         {
             roomCode,
             target
+        }  );
+  function performAction() {
+
+    const target =
+        document.getElementById(
+            "actionTarget"
+        ).value;
+
+    socket.emit(
+        "night-action",
+        {
+            roomCode,
+            target
         }
     );
+}
+
+socket.on(
+    "ability-result",
+    result => {
+
+        document
+            .getElementById(
+                "abilityResult"
+            )
+            .textContent =
+            result;
+    }
+);
 }
