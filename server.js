@@ -42,11 +42,12 @@ io.on("connection", socket => {
   socket.on("join-room", ({ roomCode, playerName }) => {
 
     if (!rooms[roomCode]) {
-      rooms[roomCode] = {
-        host: socket.id,
-        started: false,
-        players: []
-      };
+  rooms[roomCode] = {
+  host: socket.id,
+  started: false,
+  phase: "Lobby",
+  players: []
+};
     }
 
     rooms[roomCode].players.push({
@@ -77,7 +78,8 @@ io.on("connection", socket => {
 
     assignRoles(room.players);
 
-    room.started = true;
+room.started = true;
+room.phase = "Day 1";
 
     room.players.forEach(player => {
 
@@ -92,6 +94,77 @@ io.on("connection", socket => {
     );
   });
 
+  socket.on(
+    "next-phase",
+    roomCode => {
+
+        const room =
+            rooms[roomCode];
+
+        if (!room) return;
+
+        if (
+            room.host !== socket.id
+        ) return;
+
+        if (
+            room.phase.startsWith("Day")
+        ) {
+
+            const day =
+                parseInt(
+                    room.phase.split(" ")[1]
+                );
+
+            room.phase =
+                "Night " + day;
+
+        } else {
+
+            const night =
+                parseInt(
+                    room.phase.split(" ")[1]
+                );
+
+            room.phase =
+                "Day " + (night + 1);
+        }
+
+        io.to(roomCode).emit(
+            "room-update",
+            room
+        );
+    }
+);
+socket.on(
+    "vote",
+    ({
+        roomCode,
+        target
+    }) => {
+
+        const room =
+            rooms[roomCode];
+
+        if (!room) return;
+
+        const player =
+            room.players.find(
+                p => p.id === target
+            );
+
+        if (!player) return;
+
+        player.dead = true;
+
+        io.to(roomCode).emit(
+            "room-update",
+            room
+        );
+
+        checkWin(roomCode);
+    }
+);
   socket.on("chat", ({ roomCode, message }) => {
 
     const room = rooms[roomCode];
@@ -128,6 +201,43 @@ io.on("connection", socket => {
   });
 });
 
+function checkWin(roomCode) {
+
+    const room =
+        rooms[roomCode];
+
+    if (!room) return;
+
+    const wolves =
+        room.players.filter(
+            p =>
+                !p.dead &&
+                p.role === "Werewolf"
+        ).length;
+
+    const villagers =
+        room.players.filter(
+            p =>
+                !p.dead &&
+                p.role !== "Werewolf"
+        ).length;
+
+    if (wolves === 0) {
+
+        io.to(roomCode).emit(
+            "chat",
+            "🏆 Villagers Win!"
+        );
+    }
+
+    if (wolves >= villagers) {
+
+        io.to(roomCode).emit(
+            "chat",
+            "🐺 Werewolves Win!"
+        );
+    }
+}
 server.listen(3000, () => {
   console.log("Server running");
 });
