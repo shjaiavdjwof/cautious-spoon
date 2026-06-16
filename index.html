@@ -1,237 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mini Werewolf Game</title>
+<title>Mini Wolves</title>
 
 <style>
 body{
-    font-family:Arial,sans-serif;
-    max-width:900px;
-    margin:auto;
-    padding:20px;
-    background:#1e1e1e;
-    color:white;
+background:#111;
+color:white;
+font-family:Arial;
+max-width:900px;
+margin:auto;
+padding:20px;
 }
-button{
-    padding:10px;
-    margin:5px;
-    cursor:pointer;
+
+input,button{
+padding:10px;
+margin:5px;
 }
-.card{
-    border:1px solid #444;
-    padding:10px;
-    margin:10px 0;
-    border-radius:10px;
-}
-.player{
-    padding:5px;
-    margin:5px;
-    border:1px solid #555;
-}
-.dead{
-    opacity:0.4;
+
+#chat{
+height:200px;
+overflow:auto;
+border:1px solid #555;
+padding:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Mini Werewolf</h1>
+<h1>Mini Wolves V2</h1>
 
-<div class="card">
-    <input id="playerName" placeholder="Player name">
-    <button onclick="addPlayer()">Add Player</button>
-</div>
+<input id="name" placeholder="Name">
+<input id="room" placeholder="Room Code">
 
-<div class="card">
-    <button onclick="startGame()">Start Game</button>
-</div>
+<button onclick="joinRoom()">
+Join Room
+</button>
 
-<div class="card">
-    <h3>Game Phase</h3>
-    <div id="phase">Lobby</div>
-</div>
+<h2 id="role"></h2>
 
-<div class="card">
-    <h3>Players</h3>
-    <div id="players"></div>
-</div>
+<h3>Players</h3>
+<div id="players"></div>
 
-<div class="card">
-    <h3>Role Viewer</h3>
-    <select id="roleSelect"></select>
-    <button onclick="showRole()">Show My Role</button>
-    <div id="roleResult"></div>
-</div>
+<h3>Chat</h3>
 
-<div class="card">
-    <h3>Vote Out Player</h3>
-    <select id="voteSelect"></select>
-    <button onclick="voteOut()">Eliminate</button>
-</div>
+<div id="chat"></div>
 
-<script>
+<input id="message">
 
-let players = [];
-let phase = "Lobby";
+<button onclick="sendMessage()">
+Send
+</button>
 
-function addPlayer(){
-
-    const name =
-    document.getElementById("playerName").value.trim();
-
-    if(!name) return;
-
-    players.push({
-        name,
-        alive:true,
-        role:null
-    });
-
-    document.getElementById("playerName").value="";
-    renderPlayers();
-}
-
-function renderPlayers(){
-
-    const container =
-    document.getElementById("players");
-
-    container.innerHTML="";
-
-    players.forEach(p=>{
-
-        const div=document.createElement("div");
-
-        div.className =
-        "player " + (p.alive ? "" : "dead");
-
-        div.textContent =
-        p.name + (p.alive ? "" : " ☠");
-
-        container.appendChild(div);
-    });
-
-    updateSelectors();
-}
-
-function updateSelectors(){
-
-    const roleSelect =
-    document.getElementById("roleSelect");
-
-    const voteSelect =
-    document.getElementById("voteSelect");
-
-    roleSelect.innerHTML="";
-    voteSelect.innerHTML="";
-
-    players.forEach((p,index)=>{
-
-        let opt1=document.createElement("option");
-        opt1.value=index;
-        opt1.textContent=p.name;
-        roleSelect.appendChild(opt1);
-
-        let opt2=document.createElement("option");
-        opt2.value=index;
-        opt2.textContent=p.name;
-        voteSelect.appendChild(opt2);
-    });
-}
-
-function shuffle(array){
-    for(let i=array.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [array[i],array[j]]=[array[j],array[i]];
-    }
-}
-
-function startGame(){
-
-    if(players.length < 4){
-        alert("Need at least 4 players");
-        return;
-    }
-
-    phase="Day 1";
-    document.getElementById("phase").textContent=phase;
-
-    const roles=[];
-
-    roles.push("Werewolf");
-    roles.push("Seer");
-
-    while(roles.length < players.length){
-        roles.push("Villager");
-    }
-
-    shuffle(roles);
-
-    players.forEach((p,i)=>{
-        p.role=roles[i];
-        p.alive=true;
-    });
-
-    renderPlayers();
-
-    alert("Game Started!");
-}
-
-function showRole(){
-
-    const index=
-    document.getElementById("roleSelect").value;
-
-    if(index==="") return;
-
-    document.getElementById("roleResult")
-    .textContent=
-    players[index].name+
-    " is "+
-    players[index].role;
-}
-
-function voteOut(){
-
-    const index=
-    document.getElementById("voteSelect").value;
-
-    if(index==="") return;
-
-    players[index].alive=false;
-
-    renderPlayers();
-
-    checkWin();
-}
-
-function checkWin(){
-
-    let wolves=
-    players.filter(
-        p=>p.alive && p.role==="Werewolf"
-    ).length;
-
-    let villagers=
-    players.filter(
-        p=>p.alive && p.role!=="Werewolf"
-    ).length;
-
-    if(wolves===0){
-        alert("Villagers Win!");
-    }
-
-    if(wolves>=villagers){
-        alert("Werewolf Wins!");
-    }
-}
-
-renderPlayers();
-
-</script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
