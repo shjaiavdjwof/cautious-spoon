@@ -39,19 +39,33 @@ Join Room
 </button>
 
 <div id="hostControls" style="display:none;">
+
     <button onclick="startGame()">
         Start Game
     </button>
+
+    <button onclick="nextPhase()">
+        Next Phase
+    </button>
+
 </div>
 
 <h2 id="status"></h2>
+<h2 id="phase">Lobby</h2>
 <h2 id="role"></h2>
 
 <h3>Players</h3>
 <div id="players"></div>
 
-<h3>Chat</h3>
+<h3>Vote</h3>
 
+<select id="voteTarget"></select>
+
+<button onclick="votePlayer()">
+Vote Out
+</button>
+
+<h3>Chat</h3>
 <div id="chat"></div>
 
 <input id="message">
