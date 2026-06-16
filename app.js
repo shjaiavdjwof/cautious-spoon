@@ -1,5 +1,4 @@
 const socket = io("https://miniwolves-server.onrender.com");
-
 let roomCode = "";
 
 function joinRoom() {
@@ -21,21 +20,46 @@ function joinRoom() {
 
 socket.on("room-update", room => {
 
-  const players =
-    document.getElementById("players");
+    const players =
+        document.getElementById("players");
 
-  players.innerHTML = "";
+    players.innerHTML = "";
 
-  room.players.forEach(player => {
+    const voteSelect =
+        document.getElementById("voteTarget");
 
-    const div =
-      document.createElement("div");
+    voteSelect.innerHTML = "";
 
-    div.textContent =
-      player.name;
+    room.players.forEach(player => {
 
-    players.appendChild(div);
-  });
+        const div =
+            document.createElement("div");
+
+        div.textContent =
+            player.name +
+            (player.dead ? " ☠" : "");
+
+        players.appendChild(div);
+
+        if (!player.dead) {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                player.id;
+
+            option.textContent =
+                player.name;
+
+            voteSelect.appendChild(option);
+        }
+    });
+
+    document
+        .getElementById("phase")
+        .textContent =
+        room.phase || "Lobby";
 });
 
 socket.on("host-status", isHost => {
@@ -95,3 +119,26 @@ socket.on("chat", msg => {
     .innerHTML +=
     `<div>${msg}</div>`;
 });
+function nextPhase() {
+
+    socket.emit(
+        "next-phase",
+        roomCode
+    );
+}
+
+function votePlayer() {
+
+    const target =
+        document.getElementById(
+            "voteTarget"
+        ).value;
+
+    socket.emit(
+        "vote",
+        {
+            roomCode,
+            target
+        }
+    );
+}
