@@ -20,9 +20,9 @@ function assignRoles(players) {
 
   const roles = [];
 
-  roles.push("Werewolf");
-  roles.push("Seer");
-
+ roles.push("Werewolf");
+roles.push("Seer");
+roles.push("Doctor");
   while (roles.length < players.length) {
     roles.push("Villager");
   }
@@ -45,8 +45,9 @@ io.on("connection", socket => {
   rooms[roomCode] = {
   host: socket.id,
   started: false,
-  phase: "Lobby",
-  players: []
+ phase: "Lobby",
+actions: {},
+players: []
 };
     }
 
@@ -126,8 +127,10 @@ room.phase = "Day 1";
                     room.phase.split(" ")[1]
                 );
 
-            room.phase =
-                "Day " + (night + 1);
+          resolveNight(roomCode);
+
+room.phase =
+    "Day " + (night + 1);
         }
 
         io.to(roomCode).emit(
@@ -163,6 +166,35 @@ socket.on(
         );
 
         checkWin(roomCode);
+    }
+);
+  socket.on(
+    "night-action",
+    ({
+        roomCode,
+        target
+    }) => {
+
+        const room =
+            rooms[roomCode];
+
+        if (!room) return;
+
+        const player =
+            room.players.find(
+                p => p.id === socket.id
+            );
+
+        if (!player) return;
+
+        room.actions[
+            socket.id
+        ] = target;
+
+        socket.emit(
+            "ability-result",
+            "Action submitted."
+        );
     }
 );
   socket.on("chat", ({ roomCode, message }) => {
@@ -201,6 +233,90 @@ socket.on(
   });
 });
 
+function resolveNight(roomCode) {
+
+    const room =
+        rooms[roomCode];
+
+    if (!room) return;
+
+    let protectedPlayer =
+        null;
+
+    let wolfTarget =
+        null;
+
+    room.players.forEach(player => {
+
+        const target =
+            room.actions[player.id];
+
+        if (!target) return;
+
+        if (
+            player.role === "Doctor"
+        ) {
+
+            protectedPlayer =
+                target;
+        }
+
+        if (
+            player.role === "Werewolf"
+        ) {
+
+            wolfTarget =
+                target;
+        }
+
+        if (
+            player.role === "Seer"
+        ) {
+
+            const investigated =
+                room.players.find(
+                    p => p.id === target
+                );
+
+            if (investigated) {
+
+                io.to(player.id).emit(
+                    "ability-result",
+                    investigated.name +
+                    " is " +
+                    investigated.role
+                );
+            }
+        }
+    });
+
+    if (
+        wolfTarget &&
+        wolfTarget !== protectedPlayer
+    ) {
+
+        const victim =
+            room.players.find(
+                p =>
+                    p.id === wolfTarget
+            );
+
+        if (victim) {
+
+            victim.dead = true;
+
+            io.to(roomCode).emit(
+                "chat",
+                victim.name +
+                " died during the night."
+            );
+        }
+    }
+
+    room.actions = {};
+
+    checkWin(roomCode);
+}
 function checkWin(roomCode) {
 
     const room =
